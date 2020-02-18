@@ -95,6 +95,14 @@ class Division:
 
         #TODO: implement this
 
+        #The TeamId is the team that is NOT included in the graph (i.e. the team whose perspective the graph is in)
+        #First make a dictionary with all the teams (but not for the teamId team) for how many games they have left
+
+        #Make a graph with networkx
+            # G = nx.DiGraph()
+            # G.add_edge('x','a', capacity=3.0)
+            # G.add_edge('x','b', capacity=1.0)
+
         return saturated_edges
 
     def network_flows(self, saturated_edges):
