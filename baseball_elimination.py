@@ -78,7 +78,7 @@ class Division:
                 flag1 = self.network_flows(saturated_edges)
             elif solver == "Linear Programming":
                 flag1 = self.linear_programming(saturated_edges)
-        print(self.teams[teamID].name,flag1)
+        #print(self.teams[teamID].name,flag1)
         return flag1
 
     def draw_graph(self, graph, layout):
@@ -160,7 +160,7 @@ class Division:
                 if(teamID1 != teamID2 and teamID1 != THEteamID and teamID2 != THEteamID):
                     matchUps.append((teamID1, teamID2))
 
-        print(matchUps)
+        #print(matchUps)
         #print(self.G.edges(data=True))
 
         for match in matchUps:
@@ -293,18 +293,61 @@ class Division:
 
         maxflow=pic.Problem()
 
-        #Example:
+        c = {}
+
+        for e in self.G.edges.data():
+            cap = e[2]['capacity']
+            node1 = e[0]
+            node2 = e[1]
+            c[(node1, node2)] = cap
+
+
+        cc=pic.new_param('c', c)
+
+        # Add the flow variables.
+        f={}
+        for e in self.G.edges():
+          f[e]=maxflow.add_variable('f[{0}]'.format(e),1)
+
+        # Add another variable for the total flow.
+        F=maxflow.add_variable('F',1)
+
+        # Enforce edge capacities.
+        maxflow.add_list_of_constraints(
+          [f[e]<cc[e] for e in self.G.edges()], # list of constraints
+          [('e',2)],                       # e is a double index
+          'edges')                         # set the index belongs to
+
+        s = 'S'
+        t = 'T'
+        # Enforce flow conservation.
+        maxflow.add_list_of_constraints(
+          [pic.sum([f[p,i] for p in self.G.predecessors(i)],'p','pred(i)')
+            == pic.sum([f[i,j] for j in self.G.successors(i)],'j','succ(i)')
+            for i in self.G.nodes() if i not in (s,t)],
+          'i','nodes-(s,t)')
 
         # Set source flow at s.
-        # maxflow.add_constraint(
-            #   pic.sum([f[p,s] for p in G.predecessors(s)],'p','pred(s)') + F
-            #   == pic.sum([f[s,j] for j in G.successors(s)],'j','succ(s)'))
-        # Set sink flow at t.
-        # maxflow.add_constraint(
-        #   pic.sum([f[p,t] for p in G.predecessors(t)],'p','pred(t)')
-        #   == pic.sum([f[t,j] for j in G.successors(t)],'j','succ(t)') + F)
+        maxflow.add_constraint(
+          pic.sum([f[p,s] for p in self.G.predecessors(s)],'p','pred(s)') + F
+          == pic.sum([f[s,j] for j in self.G.successors(s)],'j','succ(s)'))
 
-        #https://picos-api.gitlab.io/picos/graphs.html#max-flow-min-cut-lp
+        # Set sink flow at t.
+        maxflow.add_constraint(
+          pic.sum([f[p,t] for p in self.G.predecessors(t)],'p','pred(t)')
+          == pic.sum([f[t,j] for j in self.G.successors(t)],'j','succ(t)') + F)
+
+        # Enforce flow nonnegativity.
+        maxflow.add_list_of_constraints(
+          [f[e]>0 for e in self.G.edges()], # list of constraints
+          [('e',2)],                   # e is a double index
+          'edges')                     # set the index belongs to
+
+        # Set the objective.
+        maxflow.set_objective('max',F)
+
+        # Solve the problem.
+        maxflow.solve(verbose=0,solver='glpk')
 
         return False
 

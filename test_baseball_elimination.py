@@ -9,28 +9,28 @@ def assert_eliminated(division, team):
     the linear programming and the network flows methodology for solving.
     Prints a failure message if they are not.
     '''
-    # try:
-    #     assert division.is_eliminated(team.ID, "Linear Programming") == True
-    # except AssertionError:
-    #     print("Failure in linear programming is eliminated: " + team.name + " should be eliminated.")
     try:
-        assert division.is_eliminated(team.ID, "Network Flows") == True
+        assert division.is_eliminated(team.ID, "Linear Programming") == True
     except AssertionError:
-        print("Failure in network flows is eliminated: " + team.name + " should be eliminated.")
+        print("Failure in linear programming is eliminated: " + team.name + " should be eliminated.")
+    # try:
+    #     assert division.is_eliminated(team.ID, "Network Flows") == True
+    # except AssertionError:
+    #     print("Failure in network flows is eliminated: " + team.name + " should be eliminated.")
 
 def assert_not_eliminated(division, team):
     '''Asserts that the team in the given division is not eliminated using both
     the linear programming and the network flows methodology for solving.
     Prints a failure message if the program returns that they are.
     '''
-    # try:
-    #     assert division.is_eliminated(team.ID, "Linear Programming") == False
-    # except AssertionError:
-    #     print("Failure in linear programming is eliminated: " + team.name + " should NOT be eliminated.")
     try:
-        assert division.is_eliminated(team.ID, "Network Flows") == False
+        assert division.is_eliminated(team.ID, "Linear Programming") == False
     except AssertionError:
-        print("Failure in network flows is eliminated: " + team.name + " should NOT be eliminated.")
+        print("Failure in linear programming is eliminated: " + team.name + " should NOT be eliminated.")
+    # try:
+    #     assert division.is_eliminated(team.ID, "Network Flows") == False
+    # except AssertionError:
+    #     print("Failure in network flows is eliminated: " + team.name + " should NOT be eliminated.")
 
 def test_teams2():
     '''Runs all test cases on the input matrix that can be found in teams2.txt.
