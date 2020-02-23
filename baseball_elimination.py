@@ -78,7 +78,7 @@ class Division:
                 flag1 = self.network_flows(saturated_edges)
             elif solver == "Linear Programming":
                 flag1 = self.linear_programming(saturated_edges)
-        #print(self.teams[teamID].name,flag1)
+        print(self.teams[teamID].name,flag1)
         return flag1
 
     def draw_graph(self, graph, layout):
@@ -116,26 +116,6 @@ class Division:
         saturated_edges = {}
         self.G.clear()
 
-        #print(self.teams[THEteamID].against)
-
-        #TODO: implement this
-
-        #The TeamId is the team that is NOT included in the graph (i.e. the team whose perspective the graph is in)
-        #First make a dictionary with all the teams (but not for the teamId team) for how many games they have left
-
-        #Make a graph with networkx
-            # G = nx.DiGraph()
-            # G.add_edge('x','a', capacity=3.0)
-            # G.add_edge('x','b', capacity=1.0)
-
-        #Code:
-        #For x in self.teams:
-        #   if x!= teamId:
-        #       MAP ALL VALUES TO MAP WITH :
-        #       Self.G.addEdge(self.teams[teamID].wins)
-
-        # LIKE THIS
-
         self.G.add_node('S')
 
         CapValue = self.teams[THEteamID].wins+self.teams[THEteamID].remaining
@@ -160,60 +140,17 @@ class Division:
                 if(teamID1 != teamID2 and teamID1 != THEteamID and teamID2 != THEteamID):
                     matchUps.append((teamID1, teamID2))
 
-        #print(matchUps)
-        #print(self.G.edges(data=True))
-
         for match in matchUps:
             team1, team2 = match
             gamesR = self.teams[team1].get_against(team2)
-            #gamesR = self.teams[team1].against[team2]
             saturated_edges[match] = gamesR
             self.G.add_node(match)
             self.G.add_edge('S', match, capacity=gamesR, flow= 0 )
-            #print(match)
             for matchedTeam in match:
-                self.G.add_edge(match, matchedTeam, capacity=10000000, flow=0)
+                self.G.add_edge(match, matchedTeam, capacity=sys.maxsize, flow=0)
 
-        #print(self.G.edges(data=True))
-        #print(saturated_edges)
         return saturated_edges
 
-    def find_path(self,graph, source, sink, path, visited):
-      """Finds and returns an augmenting path from source to sink, if one exists"""
-      #print(self.G.edges(data=True))
-      # residual graph needs edges going in both directions - undirected representation
-      residual_graph = graph.to_undirected()
-
-      # if you have reached the sink already, return the path
-      if source == sink:
-        return path
-
-      # go through edges in residual graph
-      for edge in residual_graph.edges(source, data=True):
-        edge_sink = edge[1]
-        edge_data = edge[2]
-
-        # determine if that edge was in the forward direction in the original graph
-        # and compute the residual based on this information
-        in_direction = graph.has_edge(source, edge_sink)
-        if in_direction:
-          residual = edge_data['capacity'] - edge_data['flow']
-        else:
-          residual = edge_data['flow']
-
-        # check for positive residual value and make sure the node hasn't already been
-        # visited as part of this path (no cycles)
-        if residual > 0 and not edge_sink in visited:
-          visited.add(edge_sink)
-          # recursively call this function until we reach the sink
-          result = self.find_path(graph, edge_sink, sink, path + [(edge,residual)], visited)
-
-          if result != None:
-            return result
-
-      # if we can't reach the sink from the source, return None
-      #print(self.G.edges(data=True))
-      return None
 
     def network_flows(self, saturated_edges):
         '''Uses network flows to determine if the team with given team ID
@@ -225,59 +162,16 @@ class Division:
         the amount of additional games they have against each other
         return: True if team is eliminated, False otherwise
         '''
-        # # print(len(self.G))
-        # # print(self.G.number_of_edges())
-        # graph = self.G
-        # source = 'S'
-        # sink = 'T'
-        #
-        # path = self.find_path(graph, source, sink, [], set(source))
-        # #
-        # #   # continue while a path exists from source to sink
-        # while path != None:
-        # #     # find the bottleneck/minimum residual value in the path
-        #     flow = min(residual for edge,residual in path)
-        # #
-        #     for edge,residual in path:
-        #       edge_data = edge[2]
-        #       # check if the edge is a forward or backward edge in the original graph
-        #       if graph.has_edge(edge[0], edge[1]):
-        #         # add the flow for forward edge
-        #         graph[edge[0]][edge[1]]['flow'] = edge_data['flow'] + flow
-        #       else:
-        #         # subtract the flow for backward edge
-        #         graph[edge[1]][edge[0]]['flow'] = edge_data['flow'] - flow
-        #
-        #     path = self.find_path(graph, source, sink, [], set(source))
-        #   # return the sum of the flow leaving the source node (which is total flow)
-        # # print(sum(edge[2]['flow'] for edge in graph.edges(source, data=True)), "MAX FLOW")
-
-
-
-        #######
-
-        #layout = nx.bipartite_layout(self.G, ['S', 'T'])
-        #self.draw_graph(self.G, layout)
 
         flow_val, flow_dict = nx.maximum_flow(self.G, 'S', 'T')
 
 
         for key in saturated_edges:
             currFlow=flow_dict['S'][key]
-            # print(key,saturated_edges[key],flow_val)
-            # print(saturated_edges[key], "CAP")
-            # print(flow_val, "FLOW")
-            # print(key, "TEAMS")
             if saturated_edges[key] != currFlow:
                 return True
 
         return False
-        #look at all first tier edges,
-        # if cap > flow
-        # return False
-        # else return true
-
-        #return sum(edge[2]['flow'] for edge in graph.edges(source, data=True))
 
     def linear_programming(self, saturated_edges):
         '''Uses linear programming to determine if the team with given team ID
@@ -293,30 +187,18 @@ class Division:
 
         maxflow=pic.Problem()
 
-        c = {}
-
-        for e in self.G.edges.data():
-            cap = e[2]['capacity']
-            node1 = e[0]
-            node2 = e[1]
-            c[(node1, node2)] = cap
-
-
-        cc=pic.new_param('c', c)
-
         # Add the flow variables.
         f={}
-        for e in self.G.edges():
-          f[e]=maxflow.add_variable('f[{0}]'.format(e),1)
+        for edge in self.G.edges():
+            upperVal = self.G[edge[0]][edge[1]]['capacity']
+            if(upperVal < sys.maxsize):
+                f[edge]=maxflow.add_variable('f[{0}]'.format(edge),1, lower=0, upper=self.G[edge[0]][edge[1]]['capacity'])
+            else:
+                f[edge]=maxflow.add_variable('f[{0}]'.format(edge),1, lower=0)
+
 
         # Add another variable for the total flow.
         F=maxflow.add_variable('F',1)
-
-        # Enforce edge capacities.
-        maxflow.add_list_of_constraints(
-          [f[e]<cc[e] for e in self.G.edges()], # list of constraints
-          [('e',2)],                       # e is a double index
-          'edges')                         # set the index belongs to
 
         s = 'S'
         t = 'T'
@@ -332,23 +214,16 @@ class Division:
           pic.sum([f[p,s] for p in self.G.predecessors(s)],'p','pred(s)') + F
           == pic.sum([f[s,j] for j in self.G.successors(s)],'j','succ(s)'))
 
-        # Set sink flow at t.
-        maxflow.add_constraint(
-          pic.sum([f[p,t] for p in self.G.predecessors(t)],'p','pred(t)')
-          == pic.sum([f[t,j] for j in self.G.successors(t)],'j','succ(t)') + F)
-
-        # Enforce flow nonnegativity.
-        maxflow.add_list_of_constraints(
-          [f[e]>0 for e in self.G.edges()], # list of constraints
-          [('e',2)],                   # e is a double index
-          'edges')                     # set the index belongs to
-
         # Set the objective.
         maxflow.set_objective('max',F)
-
         # Solve the problem.
-        maxflow.solve(verbose=0,solver='glpk')
+        maxflow.solve(verbose=0,solver='cvxopt')
 
+        for x in f:
+            a,b = x
+            if(a == 'S'):
+                if abs(self.G[a][b]['capacity']-f[x].value)>1e-4:
+                    return True
         return False
 
 
