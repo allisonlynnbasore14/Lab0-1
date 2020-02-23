@@ -1,0 +1,11 @@
+Hello Emily, Prava, and Vicky,
+
+Here is our commentary on your test case making abilities.
+
+We think they are sufficient because they cover a diverse range of competition sizes.
+It also covers the edge case of when someone can be elimintes because of other people's games as we saw in Q1.
+It also covers ties (not the kind you wear).
+
+Good Job!
+
+Allison and Grace
